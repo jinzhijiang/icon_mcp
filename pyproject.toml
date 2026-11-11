@@ -12,7 +12,7 @@ keywords = ["mcp", "icon", "server", "iconfont", "svg", "model-context-protocol"
 
 dependencies = [
     "mcp~=2.0.0",
-    "httpx~=0.28.1",
+    "httpx[http2]~=0.28.1",
     "aiohttp~=3.14.3",
     "pydantic~=2.13.4",
 ]
