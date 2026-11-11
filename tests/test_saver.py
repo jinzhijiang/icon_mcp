@@ -34,6 +34,29 @@ class TestIconSaver:
                 assert "<circle" in f.read()
 
     @pytest.mark.asyncio
+    async def test_save_icons_duplicate_names_do_not_overwrite(self):
+        icons = [
+            {"name": "setting", "svg": "<svg id='1'/>"},
+            {"name": "setting", "svg": "<svg id='2'/>"},
+            {"name": "setting", "svg": "<svg id='3'/>"},
+        ]
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = await self.saver.save_icons(icons, save_path=tmpdir)
+            assert result["saved"] == ["setting.svg", "setting_1.svg", "setting_2.svg"]
+            with open(os.path.join(tmpdir, "setting_1.svg")) as f:
+                assert "id='2'" in f.read()
+            with open(os.path.join(tmpdir, "setting_2.svg")) as f:
+                assert "id='3'" in f.read()
+
+    @pytest.mark.asyncio
+    async def test_save_icons_sanitizes_path_separators(self):
+        icons = [{"name": "../../evil", "svg": "<svg/>"}]
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = await self.saver.save_icons(icons, save_path=tmpdir)
+            assert result["saved"] == ["evil.svg"]
+            assert os.listdir(tmpdir) == ["evil.svg"]
+
+    @pytest.mark.asyncio
     async def test_save_icons_handles_missing_svg(self):
         icons = [
             {"name": "empty_icon"},  # No svg or show_svg

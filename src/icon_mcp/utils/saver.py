@@ -13,6 +13,26 @@ from .cache import CacheManager
 
 __all__ = ["IconSaver"]
 
+_UNSAFE_FILENAME_CHARS = '<>:"/\\|?*\0'
+
+
+def _unique_file_name(name: str, used_names: set[str]) -> str:
+    """Build a safe, unique .svg file name for an icon.
+
+    iconfont often returns several icons with the same name, so duplicates
+    within one batch get a numeric suffix instead of overwriting each other.
+    """
+    stem = "".join(
+        "_" if c in _UNSAFE_FILENAME_CHARS or c.isspace() else c for c in name
+    ).strip("._") or "icon"
+
+    file_name = f"{stem}.svg"
+    counter = 1
+    while file_name in used_names:
+        file_name = f"{stem}_{counter}.svg"
+        counter += 1
+    return file_name
+
 
 class IconSaver:
     """Handles saving icons to local files and sending selections to MCP client."""
@@ -32,6 +52,7 @@ class IconSaver:
 
         saved: list[str] = []
         failed: list[str] = []
+        used_names: set[str] = set()
 
         for icon in icons:
             name = icon.get("name", "unknown")
@@ -40,7 +61,8 @@ class IconSaver:
                 failed.append(name)
                 continue
 
-            file_name = f"{name}.svg"
+            file_name = _unique_file_name(name, used_names)
+            used_names.add(file_name)
             file_path = os.path.join(full_path, file_name)
             try:
                 with open(file_path, "w", encoding="utf-8") as f:
