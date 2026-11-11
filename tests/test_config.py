@@ -8,7 +8,9 @@ from icon_mcp.config import ServerConfig
 
 
 class TestServerConfig:
-    def test_defaults(self):
+    def test_defaults(self, monkeypatch):
+        # Defaults are read from the environment, so isolate from the host.
+        monkeypatch.delenv("LANGUAGE", raising=False)
         config = ServerConfig()
         assert config.web_server_port == 3000
         assert config.language == "en"
